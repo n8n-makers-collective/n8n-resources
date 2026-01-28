@@ -1,0 +1,7 @@
+Nick Saraev's YouTube channel
+Many in-depth tutorials about creating n8n workflows
+https://www.youtube.com/playlist?list=PLSbQllRagIuQZ8BrXay_s9xZlGLzAlHFJ 
+
+n8n's own training
+Very structured
+https://docs.n8n.io/learning-path/#try-it-out 
