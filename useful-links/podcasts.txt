@@ -1,0 +1,10 @@
+1. Dylan Watkins - The n8n masterclass
+======================================
+https://open.spotify.com/show/5DXTdRhf5qcBGhJWN4fJ79
+From the "About": 
+Each week we break down real business wins using n8n and AI automation. You’ll learn what worked, why it worked, 
+and what broke along the way. Founders, automation experts, and AI agencies share how they use n8n to simplify operations, 
+scale delivery, and move faster without adding more people.
+The n8n Masterclass is not about tutorials or tech jargon. It focuses on the real business side of automation, the frameworks, 
+decision patterns, and creative problem solving that turn workflows into results.
+
