@@ -1,0 +1,775 @@
+{
+  "name": "Store email threads",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -288
+      ],
+      "id": "5d11b8d1-5082-4a25-be2c-362ca2d4ef66",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "threads",
+        "include": "selectedOtherFields",
+        "fieldsToInclude": "nextPageToken",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -64
+      ],
+      "id": "07f4e64c-1f45-44bb-bb7c-8cffbce485b4",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "={{ $json.threads.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        -64
+      ],
+      "id": "52862c1a-7b6d-4643-8ece-10567916758b",
+      "name": "Get thread",
+      "webhookId": "5a6bdb17-d496-4546-a4c0-bda47d91b492",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "fcR9QLAoM6BX4Eab",
+          "name": "Gmail Cambermast"
+        }
+      },
+      "notes": "Sometimes Gmail APIs fail, so try a few times over a period before giving up."
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "email_threads",
+          "mode": "list",
+          "cachedResultName": "email_threads"
+        },
+        "deleteCommand": "delete",
+        "where": {
+          "values": [
+            {
+              "column": "thread_id",
+              "value": "={{ $('Get thread').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "b894151b-2a06-44a9-a16e-05aaf40f3f16",
+      "name": "Delete old thread",
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "rv1OZmzhQu8IDgWp",
+          "name": "email_db_postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "email_threads",
+          "mode": "list",
+          "cachedResultName": "email_threads"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message_count": "={{ $json.messages.length }}",
+            "thread_id": "={{ $json.id }}",
+            "raw_thread": "={{ $json }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message_count",
+              "displayName": "message_count",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "raw_thread",
+              "displayName": "raw_thread",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ingested_at",
+              "displayName": "ingested_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2016,
+        -48
+      ],
+      "id": "9f6d0ad9-3188-4599-a7da-17fca721f1b4",
+      "name": "Insert new thread",
+      "credentials": {
+        "postgres": {
+          "id": "rv1OZmzhQu8IDgWp",
+          "name": "email_db_postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://gmail.googleapis.com/gmail/v1/users/me/threads",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "maxResults",
+              "value": "300"
+            },
+            {
+              "name": "q",
+              "value": "={{$json.query}} -in:spam -in:trash"
+            },
+            {
+              "name": "pageToken",
+              "value": "={{$json.pageToken || \"\"}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        -80
+      ],
+      "id": "10c11020-0eac-4869-b41c-2b9b347dc464",
+      "name": "Get threads",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "fcR9QLAoM6BX4Eab",
+          "name": "Gmail Cambermast"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f0a11ce-6e8e-48c5-92ce-3390a40b4352",
+              "name": "query",
+              "value": "=after:{{ $json.ingested_at.slice(0,10).replace(/-/g,'/') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -176
+      ],
+      "id": "dff5f61b-bf65-4217-b5f8-120c0891f88a",
+      "name": "Has data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "83f202d6-35af-44d3-bfd4-aaf9123e3bf7",
+              "leftValue": "={{$json.ingested_at}}",
+              "rightValue": "",
+              "operator": {
+                "type": "dateTime",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "8e680abb-e63f-4a42-9f69-64edffcf64f7",
+      "name": "Is there an ingestion date",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "935f38a5-94b9-4d52-baaf-f0c34b960e64",
+              "name": "query",
+              "value": "newer_than:6M",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        32
+      ],
+      "id": "189423f9-dc9c-4203-a71c-89f9c6608a94",
+      "name": "Has no data"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1792,
+        -48
+      ],
+      "id": "1cb9a980-c9d7-431b-8f4e-46c7ac0a255d",
+      "name": "Keep thread after delete"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac2bf4ad-ea55-4647-ad5b-114fe21152e7",
+              "name": "pageToken",
+              "value": "={{$json.nextPageToken || \"\"}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2016,
+        -368
+      ],
+      "id": "d8e8f4f0-1bef-4409-91c1-1069416f68d2",
+      "name": "Capture page token"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0978b01b-5f62-422f-b037-732d6cf779f5",
+              "leftValue": "={{ $('Capture page token').item.json.pageToken }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2432,
+        0
+      ],
+      "id": "cc1186e1-9a51-4b74-a23f-8e5a5628a9e8",
+      "name": "If",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2224,
+        -208
+      ],
+      "id": "3095484b-95af-456f-8ef9-c231fd78cdf3",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "1948de11-1aed-4927-98df-652373501354",
+      "name": "Schedule Trigger",
+      "notesInFlow": true,
+      "notes": "Run the workflow every 15 minutes."
+    },
+    {
+      "parameters": {
+        "content": "## Ingest email threads\nKeep an up-to-date database of all email threads to use downstream.\n\nFor example, to follow up on an email, to fine-tune a model, to capture actions, etc.",
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -448,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "03540089-e07a-4470-bd7e-54657a2b981c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Determine what to ingest\nIf there is no data in the database, collect a certain amount (e.g., 6M = 6 months)\n\nOtherwise, get data as of the last ingestion.\n\n**Do we remove old threads?**\nNo. This code gets the last 6 months (default) and then continues to store as long as the workflow runs. It does not keep a \"running 6 months\" for example.",
+        "height": 208,
+        "width": 640
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        176,
+        -592
+      ],
+      "typeVersion": 1,
+      "id": "f1b27702-4012-4a7a-9fea-dec55a6ce4db",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Collect threads to ingest\nIf there is no data in the database, collect a certain amount (eg 6M = 6 months)\n\nOtherwise, get data as of the last ingestion.",
+        "height": 208,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        544,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "3e64f0e4-fcb5-4227-a2ce-4c7c5ff468fb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Keep the database clean\nYou might retrieve an existing thread ID. If so, delete them, then add them back.\n\nThis is on purpose because an email thread may have been updated and you do not want multiple copies of the same thread.\n",
+        "height": 208,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1440,
+        -608
+      ],
+      "typeVersion": 1,
+      "id": "f38ef42c-0ece-4464-a056-465024a87cf1",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Paginate if necessary\nIf there are more threads to ingest, page to the next round. If not, end silently.",
+        "height": 208,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2144,
+        192
+      ],
+      "typeVersion": 1,
+      "id": "7871c3c0-026e-4532-8cc6-37ac45d8b641",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        16
+      ],
+      "id": "b59237a8-290c-4adf-9c32-7449aa543b86",
+      "name": "Workflow is done"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "email_threads",
+          "mode": "list",
+          "cachedResultName": "email_threads"
+        },
+        "limit": 1,
+        "sort": {
+          "values": [
+            {
+              "column": "ingested_at",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        224,
+        -80
+      ],
+      "id": "ae1ad636-f5f6-4380-ae5f-f01b3e343d60",
+      "name": "Find last ingestion date",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "rv1OZmzhQu8IDgWp",
+          "name": "email_db_postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Gmail Thread Ingestion Workflow\n\nThis workflow keeps a PostgreSQL database in sync with Gmail threads. It runs on a schedule, pulls new or updated threads, and stores them for downstream automation and analysis.\n\n**What it does**\n* Retrieves Gmail thread IDs using the Gmail API\n* Determines what to ingest based on the last ingestion date\n* Fetches full thread data for each thread\n* Deletes existing records before re-inserting to handle updates\n* Paginates through results until all threads are processed\n\n**Why it retrieves threads that may already exist**\nEmail threads are not static. New messages, label changes, or metadata updates can occur at any time.\n\nTo ensure accuracy, the workflow intentionally re-ingests existing thread IDs. It deletes prior\nexisting records first, then inserts the latest version of the thread.\n\nThis guarantees the database always reflects the current state of each conversation.\n\n**Why it exists**\n* Maintains a clean, up-to-date thread dataset\n* Enables follow-ups, action tracking, and AI processing\n* Supports downstream workflows that rely on email context\n",
+        "height": 560,
+        "width": 720,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -1344
+      ],
+      "typeVersion": 1,
+      "id": "d0013787-d6f9-4914-9a9d-adcb6370003d",
+      "name": "Sticky Note6"
+    }
+  ],
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "json": {
+          "isArtificialRecoveredEventItem": true
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Find last ingestion date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Get thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get thread": {
+      "main": [
+        [
+          {
+            "node": "Delete old thread",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Keep thread after delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete old thread": {
+      "main": [
+        [
+          {
+            "node": "Keep thread after delete",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get threads": {
+      "main": [
+        [
+          {
+            "node": "Capture page token",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is there an ingestion date": {
+      "main": [
+        [
+          {
+            "node": "Has data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has no data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has data": {
+      "main": [
+        [
+          {
+            "node": "Get threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert new thread": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Has no data": {
+      "main": [
+        [
+          {
+            "node": "Get threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep thread after delete": {
+      "main": [
+        [
+          {
+            "node": "Insert new thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture page token": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get threads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Workflow is done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find last ingestion date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find last ingestion date": {
+      "main": [
+        [
+          {
+            "node": "Is there an ingestion date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "f2KoLlADfsdgT4bL"
+  },
+  "versionId": "06be91be-0544-4666-bfd9-29fd1997b3f3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "388c8ebe580b0e01a0d37e83b5522bd107a76b4523f77c5b6d18db4523f34519"
+  },
+  "id": "BXqfUivxOKGh4UCL",
+  "tags": []
+}
