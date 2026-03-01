@@ -1,0 +1,389 @@
+{
+  "name": "Backup n8n workflows",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "4cd3a4df-60eb-48d7-a654-6e447044d0b2",
+      "name": "When clicking 'Execute workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "filters": {},
+        "requestOptions": {}
+      },
+      "id": "f7424104-55ab-4cca-bb1f-dcb619f17c57",
+      "name": "Get many workflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        432,
+        16
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "C04Fd5S5LCrWsrJ8",
+          "name": "eba n8n vps"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\nfor (const item of $input.all()) {\n  const workflow = item.json;\n  const safeName = (workflow.name || `workflow-${workflow.id}`)\n    .replace(/[\\/\\\\:*?\"<>|]/g, '_');\n  results.push({\n    json: {\n      fileName: `${safeName}.json`,\n      workflowJson: JSON.stringify(workflow, null, 2)\n    }\n  });\n}\nreturn results;"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Prepare Backup Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "workflowJson",
+        "options": {
+          "fileName": "={{ $json.fileName }}"
+        }
+      },
+      "id": "b2c3d4e5-0002-4000-8000-000000000002",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1hthdIY0apRbWlcU_8kH9gs3OOFqndnsn",
+          "mode": "list",
+          "cachedResultName": "n8n bck",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1hthdIY0apRbWlcU_8kH9gs3OOFqndnsn"
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-0003-4000-8000-000000000003",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1104,
+        16
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "OcuhfphK1BqlxM2b",
+          "name": "eba gdrive"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# Backup n8n workflows to individual JSON\nCreate by [Eddy Balaya](https://linktr.ee/eddybalaya)\n## How to use\n**1. Setup n8n API**\nGo to setting > n8n API > Create API\nCreate Credential: \n- Copy API Key\n- Copy https://yourdomain.com/api/v1; replace \"your domain with your n8n host URL\n\n**2. Setup Gdrive Credential**\n- Create a folder (to store your backups)\n- Go to https://console.cloud.google.com/ > APIs & Services\n- Click on \"+ Enable APIs and services\" \n- Search for \"Drive\", select \"Google Drive API\" exactly (not the other ones)\n- Click on OAuth Consent Screen > Data Access > Add or remove scope\n- Search for \"drive\" or \"drive.file\" in \"Enter property name or value\"\n    - https://www.googleapis.com/auth/drive (full Drive access)\n    - OR https://www.googleapis.com/auth/drive.file (only files created by the app — more restrictive)\n- Click on \"Update\"\n- Click on Clients > + Create client > Web application\n- Name your app (ex \"n8n-gdrive\")\n- in n8n, in \"Upload to Google Drive\" node, Create new credential or edit existing one\n- copy \"OAuth Redirect URL\"\n- Go back to Google Cloud Console, Click \"+Add URI\" and copy URL copied above\n- Click Create\n- Final step, in \"APIs & Services\" > \"Audience\", add User (yourself, a personal email that you use to connect to Gdrive. \n\n- Execute workflow and enjoy!\n\n\n[Leave a 5 star review, if it was worth it!](https://share.google/5K3liTiDiZ6waXDKW)",
+        "height": 720,
+        "width": 880
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "076a9c08-ce38-4554-9c3e-2f2c351d755d",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {
+    "Limit": [
+      {
+        "json": {
+          "updatedAt": "2026-02-07T18:13:16.002Z",
+          "createdAt": "2026-02-07T18:13:16.002Z",
+          "id": "FNtS37BiIhT3ACFsNHkeP",
+          "name": "Delete Appointment",
+          "active": false,
+          "isArchived": false,
+          "nodes": [
+            {
+              "parameters": {
+                "workflowInputs": {
+                  "values": [
+                    {
+                      "name": "eventID"
+                    }
+                  ]
+                }
+              },
+              "type": "n8n-nodes-base.executeWorkflowTrigger",
+              "typeVersion": 1.1,
+              "position": [
+                0,
+                0
+              ],
+              "id": "56274047-7e03-4e61-8fb3-4888c78606aa",
+              "name": "When Executed by Another Workflow"
+            },
+            {
+              "parameters": {
+                "operation": "delete",
+                "calendar": {
+                  "__rl": true,
+                  "value": "nateherk88@gmail.com",
+                  "mode": "list",
+                  "cachedResultName": "nateherk88@gmail.com"
+                },
+                "eventId": "={{ $json.eventID }}",
+                "options": {}
+              },
+              "type": "n8n-nodes-base.googleCalendar",
+              "typeVersion": 1.3,
+              "position": [
+                208,
+                0
+              ],
+              "id": "6bf5736f-5651-444b-9285-28b0222794a7",
+              "name": "Delete an event"
+            },
+            {
+              "parameters": {
+                "operation": "update",
+                "documentId": {
+                  "__rl": true,
+                  "value": "10AgDO-r3qUk8y2HoYW8pw13dkkyHLqf1XB93ou9nGBE",
+                  "mode": "list",
+                  "cachedResultName": "Hercules Detailing CRM",
+                  "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10AgDO-r3qUk8y2HoYW8pw13dkkyHLqf1XB93ou9nGBE/edit?usp=drivesdk"
+                },
+                "sheetName": {
+                  "__rl": true,
+                  "value": 2008710317,
+                  "mode": "list",
+                  "cachedResultName": "Appointment Log",
+                  "cachedResultUrl": "https://docs.google.com/spreadsheets/d/10AgDO-r3qUk8y2HoYW8pw13dkkyHLqf1XB93ou9nGBE/edit#gid=2008710317"
+                },
+                "columns": {
+                  "mappingMode": "defineBelow",
+                  "value": {
+                    "Date": "={{ $json.originalStartTime }}",
+                    "Notes": "Canceled",
+                    "ID": "={{ $('When Executed by Another Workflow').item.json.eventID }}"
+                  },
+                  "matchingColumns": [
+                    "ID"
+                  ],
+                  "schema": [
+                    {
+                      "id": "ID",
+                      "displayName": "ID",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "string",
+                      "canBeUsedToMatch": true,
+                      "removed": false
+                    },
+                    {
+                      "id": "Email",
+                      "displayName": "Email",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "string",
+                      "canBeUsedToMatch": true,
+                      "removed": true
+                    },
+                    {
+                      "id": "Appointment Type",
+                      "displayName": "Appointment Type",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "string",
+                      "canBeUsedToMatch": true,
+                      "removed": true
+                    },
+                    {
+                      "id": "Date",
+                      "displayName": "Date",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "string",
+                      "canBeUsedToMatch": true,
+                      "removed": false
+                    },
+                    {
+                      "id": "Notes",
+                      "displayName": "Notes",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "string",
+                      "canBeUsedToMatch": true
+                    },
+                    {
+                      "id": "row_number",
+                      "displayName": "row_number",
+                      "required": false,
+                      "defaultMatch": false,
+                      "display": true,
+                      "type": "number",
+                      "canBeUsedToMatch": true,
+                      "readOnly": true,
+                      "removed": true
+                    }
+                  ],
+                  "attemptToConvertTypes": false,
+                  "convertFieldsToString": false
+                },
+                "options": {}
+              },
+              "type": "n8n-nodes-base.googleSheets",
+              "typeVersion": 4.7,
+              "position": [
+                416,
+                0
+              ],
+              "id": "428df4b0-8f86-489d-80ac-a185173c7fa5",
+              "name": "Update row in sheet"
+            }
+          ],
+          "connections": {
+            "When Executed by Another Workflow": {
+              "main": [
+                [
+                  {
+                    "node": "Delete an event",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            },
+            "Delete an event": {
+              "main": [
+                [
+                  {
+                    "node": "Update row in sheet",
+                    "type": "main",
+                    "index": 0
+                  }
+                ]
+              ]
+            }
+          },
+          "settings": {
+            "executionOrder": "v1",
+            "binaryMode": "separate",
+            "availableInMCP": false
+          },
+          "staticData": null,
+          "meta": null,
+          "pinData": {},
+          "versionId": "ef1b2fef-0aaa-4d01-a36e-88b13e710913",
+          "activeVersionId": null,
+          "triggerCount": 0,
+          "shared": [
+            {
+              "updatedAt": "2026-02-07T18:13:16.002Z",
+              "createdAt": "2026-02-07T18:13:16.002Z",
+              "role": "workflow:owner",
+              "workflowId": "FNtS37BiIhT3ACFsNHkeP",
+              "projectId": "fFQ74wfT7gHvH9X3"
+            }
+          ],
+          "activeVersion": null,
+          "tags": [
+            {
+              "updatedAt": "2026-02-07T18:12:49.843Z",
+              "createdAt": "2026-02-07T18:12:49.843Z",
+              "id": "otlI5KsjLFMFaKbn",
+              "name": "Vapi MCP"
+            }
+          ]
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking 'Execute workflow'": {
+      "main": [
+        [
+          {
+            "node": "Get many workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many workflows": {
+      "main": [
+        [
+          {
+            "node": "Prepare Backup Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Backup Data": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "23535672-47f5-4e99-941e-ade454b2184a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26dd27d37b0ca8dcb162d8634a177ae1d446a37ab5ba3e52d8f57ee1d4ddf4d7"
+  },
+  "id": "ZoIRNtP8qhZE3U3s",
+  "tags": []
+}
